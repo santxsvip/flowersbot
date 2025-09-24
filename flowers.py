@@ -2,6 +2,7 @@ import asyncio
 import aiosqlite
 import re
 import logging
+import os
 from datetime import datetime
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -19,12 +20,12 @@ from aiogram.fsm.state import State, StatesGroup
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN = "8400667325:AAGwmrU_NLVFJBxBaTvL5P0BFyAlnVJ-X0A"
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 MANAGER_CHAT_ID = -1002989893222
 ADMIN_IDS = [6982991715, 7682254485]
 
-if not BOT_TOKEN or BOT_TOKEN == "PASTE_YOUR_TOKEN_HERE":
-    raise RuntimeError("Set BOT_TOKEN environment variable or paste into code")
+if not BOT_TOKEN:
+    raise RuntimeError("BOT_TOKEN environment variable not set. Please set it to your Telegram bot token.")
 
 bot = Bot(
     token=BOT_TOKEN,
@@ -712,7 +713,7 @@ async def edit_city_start(callback: CallbackQuery, state: FSMContext):
         kb.adjust(2)
         await callback.message.answer("Оберіть місто для редагування:", reply_markup=kb.as_markup())
         await callback.answer()
-except Exception as e:
+    except Exception as e:
         logger.error(f"Error in edit_city_start: {e}")
         await callback.message.answer("❌ Помилка при завантаженні міст")
 
@@ -1026,7 +1027,9 @@ async def main():
         raise
 
 if __name__ == "__main__":
-    asyncio.run(main())dp.callback_query(F.data.startswith("edit_city:"))
+    asyncio.run(main())
+
+@dp.callback_query(F.data.startswith("edit_city:"))
 async def edit_city_choose(callback: CallbackQuery, state: FSMContext):
     city_id = int(callback.data.split(":")[1])
     await state.update_data(city_id=city_id)
